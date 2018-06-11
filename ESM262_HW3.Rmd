@@ -1,0 +1,120 @@
+---
+title: "ESM 262 HW3 Rmd"
+author: "Lauren Kaapcke"
+date: "June 9, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r tools}
+
+library(tidyverse)
+library(devtools)
+library(roxygen2)
+library(testthat)
+library(ESM262Package)
+
+```
+
+## 1. Generate example data for the fish market function. Save it to the package.
+
+```{r fish_tables}
+
+# Create a table with prices for different types of fish.
+# Create vectors for fish and prices.
+fish <- sample(c("Salmon", "Steelhead", "Tuna", "Shark", "Cod"))
+prices <- sample(1:15, 5, replace = T)
+
+# Bind into a tibble.
+fish_prices <- as_tibble(cbind(fish, prices))
+colnames(fish_prices) <- c("Fish", "Prices")
+fish_prices
+
+# I saved this to the package with the use_data() function
+
+# Create a table with the numbers of fish caught in various locations.
+# Create vectors for locations and catch numbers.
+locations <- sample(c("SB", "Ventura", "Carpinteria", "Goleta", "Montecito", "MusselShoals"))
+catch <- sample(0:100, 6, replace = T)
+
+# Repeat the catch vector for each fish in the fish table and bind into a table. 
+catch_table <- matrix(nrow = length(fish), ncol = length(locations), dimnames = list(fish, locations)) # Create a 5 x 6 matrix
+for (i in 1:length(fish)) {
+  catch_table[i,] = sample(0:100, length(locations), replace = T)
+}
+catch_table <- as.data.frame(catch_table) # Why does making it a tibble remove the row names?
+catch_table
+
+# I saved this to the package with the use_data() function
+
+# Save this table to the package
+fish_market_data = catch_table
+use_data(fish_market_data, pkg = "ESM262Package", overwrite = T)
+
+```
+
+## 2. Use the function!
+
+```{r function}
+
+fisheries_summary(prices = fish_prices, catch_table = catch_table)
+
+fisheries_summary(prices = fish_prices, catch_table = fish_market_data)
+
+fisheries_summary(prices = fish_prices, catch_table = fish_market_data, plot = T)
+
+# My outputs have very strange symbols around them yp - what is this?!
+
+```
+
+## 3. Use the growth rate function with parameters from Bjoornsson et al., 2007
+
+```{r growth}
+
+fish_growth(T = 4, a = -0.2425, b = 0.1519, c = 0.0552, d = -0.002931)
+fish_growth(T = 10, a = -0.2425, b = 0.1519, c = 0.0552, d = -0.002931)
+
+```
+
+## Test each function
+
+Test for fish growth function:
+
+```{r fish_test}
+
+# test_file("/test/fishgrowthtest")
+# I got the error 'pat' does not exist so below is my test within this document:
+
+fishgrowthtest <- test_that("fish growth works", {
+
+  expect_that(fish_growth(T = 1,
+                          a = 1,
+                          b = 1,
+                          c = 1,
+                          d = 1),
+              equals(4))
+})
+fishgrowthtest
+
+```
+
+Test for fishery summaries function:
+
+```{r}
+
+fisheriessummarytest <- test_that("fishery summary function works", {
+  expect_that(length(fisheries_summary(prices = fish_price,
+                                       catch_table = catch_table)[[1]]),
+              equals(2))})
+fisheriessummarytest
+
+# I could not get the following test to work and I did not understand why. I wanted to test that the total revenue equaled what I expected from the input tables.
+#fishmarkettest <- test_that("fishmarketworks",
+                            #{expect_that((fisheries_summary(prices = fish_prices, catch_table =
+                                                         # catch_table)[[3]]),
+                                         #equals(14924))})
+
+```
